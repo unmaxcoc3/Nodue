@@ -1,59 +1,107 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>No Due - Smart Attendance Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>nodue - Premium Attendance</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
         :root {
-            --primary: #4f46e5;
-            --success: #10b981;
-            --danger: #f43f5e;
-            --warning: #f59e0b;
+            --primary: #6366f1;
         }
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #f8fafc;
-            -webkit-tap-highlight-color: transparent;
-            overscroll-behavior: none;
             margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+            /* Default Dark Midnight Aurora */
+            background: #020617;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(263,45%,12%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(320,45%,12%,1) 0, transparent 50%),
+                radial-gradient(at 50% 100%, hsla(220,45%,10%,1) 0, transparent 80%);
+            color: #f8fafc;
         }
 
-        .dark body { background-color: #0f172a; }
+        /* Light mode overrides if user manually switches back */
+        html:not(.dark) body {
+            background: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,95%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,96%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,96%,1) 0, transparent 50%);
+            color: #0f172a;
+        }
 
-        #root {
-            max-width: 450px;
-            margin: 0 auto;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+        #root { height: 100%; display: flex; flex-direction: column; }
+
+        /* Rich Glass Effect */
+        .glass-premium {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(25px) saturate(160%);
+            -webkit-backdrop-filter: blur(25px) saturate(160%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 
+                0 4px 30px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0px rgba(255, 255, 255, 0.1);
+        }
+
+        html:not(.dark) .glass-premium {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 4px 30px rgba(0, 0, 0, 0.03),
+                inset 0 1px 1px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Rich iPhone-style Button */
+        .btn-rich {
+            position: relative;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 
+                0 8px 24px -6px rgba(0, 0, 0, 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-rich:active {
+            transform: scale(0.92);
+            box-shadow: 0 2px 10px -4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Card styles */
+        .card-rich {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.5);
+        }
+
+        html:not(.dark) .card-rich {
             background: white;
-            box-shadow: 0 0 50px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.05);
         }
 
-        .dark #root { background: #0f172a; color: white; box-shadow: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
-    <script type="importmap">
-    {
-      "imports": {
-        "react/": "https://esm.sh/react@^19.2.3/",
-        "react": "https://esm.sh/react@^19.2.3",
-        "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
-      }
-    }
-    </script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
 </head>
-<body class="transition-colors duration-300">
-    <!-- Mounting point for React Application -->
+<body class="transition-colors duration-500">
     <div id="root"></div>
-    
-    <!-- ES6 Module entry point -->
     <script type="module" src="./index.tsx"></script>
 </body>
 </html>

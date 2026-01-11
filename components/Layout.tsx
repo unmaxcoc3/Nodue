@@ -11,45 +11,54 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, title }) => {
   return (
-    <div className="flex flex-col min-h-screen pb-20 max-w-md mx-auto bg-white shadow-xl dark:bg-slate-900 dark:text-white transition-colors">
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 p-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-          {title}
-        </h1>
-        <div className="flex gap-3">
-          <button 
-            onClick={() => setView(ViewMode.SETTINGS)}
-            className={`p-2 rounded-full transition-colors ${activeView === ViewMode.SETTINGS ? 'bg-blue-100 text-blue-600' : 'text-slate-500 hover:bg-slate-100'}`}
-          >
-            <i className="fa-solid fa-gear"></i>
-          </button>
+    <div className="flex flex-col h-screen w-full max-w-md mx-auto relative overflow-hidden">
+      <header className="pt-16 pb-4 px-8 flex justify-between items-center z-40">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-500 mb-0.5">
+            Campus Pulse
+          </span>
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tighter">
+            {title}
+          </h1>
         </div>
+        <button 
+          onClick={() => setView(ViewMode.SETTINGS)}
+          className={`w-12 h-12 rounded-[1.25rem] flex items-center justify-center transition-all btn-rich ${
+            activeView === ViewMode.SETTINGS 
+              ? 'bg-gradient-to-br from-indigo-500 to-indigo-700 text-white' 
+              : 'glass-premium text-slate-500 dark:text-slate-300'
+          }`}
+        >
+          <i className="fa-solid fa-user-circle text-xl"></i>
+        </button>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-4 py-6">
+      <main className="flex-1 overflow-y-auto no-scrollbar px-6 pb-40 pt-4">
         {children}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 p-2 flex justify-around items-center z-50">
-        <NavButton 
-          active={activeView === ViewMode.DASHBOARD} 
-          onClick={() => setView(ViewMode.DASHBOARD)} 
-          icon="fa-chart-pie" 
-          label="Dashboard" 
-        />
-        <NavButton 
-          active={activeView === ViewMode.CALENDAR} 
-          onClick={() => setView(ViewMode.CALENDAR)} 
-          icon="fa-calendar-days" 
-          label="Calendar" 
-        />
-        <NavButton 
-          active={activeView === ViewMode.TIMETABLE} 
-          onClick={() => setView(ViewMode.TIMETABLE)} 
-          icon="fa-clock" 
-          label="Timetable" 
-        />
-      </nav>
+      <div className="absolute bottom-10 left-0 right-0 z-50 flex justify-center px-8 pointer-events-none">
+        <nav className="glass-premium w-full pointer-events-auto rounded-[2.5rem] p-2 flex justify-between items-center shadow-2xl">
+          <NavButton 
+            active={activeView === ViewMode.DASHBOARD} 
+            onClick={() => setView(ViewMode.DASHBOARD)} 
+            icon="fa-grip" 
+            label="Overview" 
+          />
+          <NavButton 
+            active={activeView === ViewMode.CALENDAR} 
+            onClick={() => setView(ViewMode.CALENDAR)} 
+            icon="fa-calendar-check" 
+            label="Registry" 
+          />
+          <NavButton 
+            active={activeView === ViewMode.TIMETABLE} 
+            onClick={() => setView(ViewMode.TIMETABLE)} 
+            icon="fa-list-ul" 
+            label="Plan" 
+          />
+        </nav>
+      </div>
     </div>
   );
 };
@@ -57,10 +66,14 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, title })
 const NavButton: React.FC<{ active: boolean; onClick: () => void; icon: string; label: string }> = ({ active, onClick, icon, label }) => (
   <button 
     onClick={onClick}
-    className={`flex flex-col items-center gap-1 transition-all px-4 py-2 rounded-xl ${active ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-slate-400 dark:text-slate-500'}`}
+    className={`flex flex-col items-center justify-center gap-1.5 flex-1 py-3.5 rounded-[2rem] transition-all duration-300 ${
+      active 
+        ? 'text-white bg-gradient-to-br from-indigo-500 via-indigo-600 to-blue-700 shadow-xl shadow-indigo-500/30' 
+        : 'text-slate-400 dark:text-slate-500'
+    }`}
   >
-    <i className={`fa-solid ${icon} text-lg`}></i>
-    <span className="text-[10px] font-medium uppercase tracking-wider">{label}</span>
+    <i className={`fa-solid ${icon} text-lg ${active ? 'scale-110 drop-shadow-md' : ''}`}></i>
+    <span className="text-[9px] font-black uppercase tracking-[0.1em]">{label}</span>
   </button>
 );
 
