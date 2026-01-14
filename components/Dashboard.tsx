@@ -18,8 +18,38 @@ const Dashboard: React.FC<DashboardProps> = ({ user, attendance, dayAttendance, 
     const holidays = dayAttendance.filter(d => d.status === 'HOLIDAY').length;
     const goal = user.attendanceGoal;
 
-    return { present, absent, workingDays, percentage, holidays };
-  }, [dayAttendance]);
+    // Calculation for "How many days to attend" or "How many to skip"
+    let forecastMessage = "";
+    let forecastValue = 0;
+    let forecastType: 'BUFFER' | 'REQUIRED' | 'NEUTRAL' = 'NEUTRAL';
+
+    const target = goal / 100;
+
+    if (workingDays === 0) {
+      forecastMessage = "Start marking to see forecast";
+    } else if (percentage < goal) {
+      // Below goal: (present + x) / (workingDays + x) = target
+      // present + x = target * workingDays + target * x
+      // x - target * x = target * workingDays - present
+      // x (1 - target) = target * workingDays - present
+      // x = (target * workingDays - present) / (1 - target)
+      forecastValue = Math.ceil((target * workingDays - present) / (1 - target));
+      forecastMessage = `Attend next ${forecastValue} classes to reach ${goal}%`;
+      forecastType = 'REQUIRED';
+    } else {
+      // Above goal: present / (workingDays + x) = target
+      // present = target * workingDays + target * x
+      // target * x = present - target * workingDays
+      // x = (present / target) - workingDays
+      forecastValue = Math.floor((present / target) - workingDays);
+      forecastMessage = forecastValue > 0 
+        ? `You can skip next ${forecastValue} classes` 
+        : "You are exactly on track";
+      forecastType = forecastValue > 0 ? 'BUFFER' : 'NEUTRAL';
+    }
+
+    return { present, absent, workingDays, percentage, holidays, forecastValue, forecastMessage, forecastType };
+  }, [dayAttendance, user.attendanceGoal]);
 
   const onTrack = stats.percentage >= user.attendanceGoal;
 
@@ -65,6 +95,29 @@ const Dashboard: React.FC<DashboardProps> = ({ user, attendance, dayAttendance, 
                 </div>
              </div>
           </div>
+        </div>
+      </div>
+
+      {/* Smart Forecast Card */}
+      <div className="card-rich p-6 border-white/5 relative overflow-hidden">
+        <div className="flex items-center gap-4">
+          <div className={`w-14 h-14 rounded-3xl flex items-center justify-center text-2xl shadow-inner ${
+            stats.forecastType === 'REQUIRED' ? 'bg-rose-500/10 text-rose-500' : 
+            stats.forecastType === 'BUFFER' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-500/10 text-slate-500'
+          }`}>
+            <i className={`fa-solid ${stats.forecastType === 'REQUIRED' ? 'fa-arrow-trend-up' : stats.forecastType === 'BUFFER' ? 'fa-shield-heart' : 'fa-info-circle'}`}></i>
+          </div>
+          <div className="flex-1">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Smart Forecast</p>
+            <h3 className="font-bold text-slate-800 dark:text-white leading-tight">
+              {stats.forecastMessage}
+            </h3>
+          </div>
+          {stats.forecastValue > 0 && (
+            <div className={`text-3xl font-black ${stats.forecastType === 'REQUIRED' ? 'text-rose-500' : 'text-emerald-500'}`}>
+              {stats.forecastValue}
+            </div>
+          )}
         </div>
       </div>
 
