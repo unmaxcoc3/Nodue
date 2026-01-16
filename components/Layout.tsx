@@ -15,7 +15,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, title })
       <header className="pt-16 pb-4 px-8 flex justify-between items-center z-40">
         <div className="flex flex-col">
           <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-500 mb-0.5">
-            Campus Pulse
+            nodue
           </span>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tighter">
             {title}
