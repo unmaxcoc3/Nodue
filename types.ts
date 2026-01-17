@@ -27,10 +27,12 @@ export interface AttendanceRecord {
 
 export interface UserProfile {
   name: string;
-  collegeName: string;
+  institutionName: string; // Combined college/university
   semester: string;
   attendanceGoal: number;
-  useAdvancedMode: boolean; // Toggle for subject-wise vs full-day
+  useAdvancedMode: boolean;
+  email?: string;
+  isSynced?: boolean;
 }
 
 export enum ViewMode {

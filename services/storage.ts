@@ -1,42 +1,52 @@
 
 import { STORAGE_KEYS } from '../constants';
 import { UserProfile, TimetableSlot, AttendanceRecord, DayAttendance } from '../types';
-
-const KEYS = {
-  ...STORAGE_KEYS,
-  DAY_ATTENDANCE: 'nodue_day_attendance'
-};
+import { db } from './database';
 
 export const storage = {
-  getUser: (): UserProfile | null => {
-    const data = localStorage.getItem(KEYS.USER);
-    return data ? JSON.parse(data) : null;
+  getUser: async (): Promise<UserProfile | null> => {
+    return await db.get('profile', 'current');
   },
-  setUser: (user: UserProfile) => {
-    localStorage.setItem(KEYS.USER, JSON.stringify(user));
+
+  setUser: async (user: UserProfile) => {
+    await db.set('profile', 'current', user);
   },
-  getTimetable: (): TimetableSlot[] => {
-    const data = localStorage.getItem(KEYS.TIMETABLE);
-    return data ? JSON.parse(data) : [];
+
+  getTimetable: async (): Promise<TimetableSlot[]> => {
+    return await db.get('timetable');
   },
-  setTimetable: (slots: TimetableSlot[]) => {
-    localStorage.setItem(KEYS.TIMETABLE, JSON.stringify(slots));
+
+  setTimetable: async (slots: TimetableSlot[]) => {
+    const transaction = (db as any).db.transaction(['timetable'], 'readwrite');
+    const store = transaction.objectStore('timetable');
+    store.clear();
+    slots.forEach(s => store.add(s));
   },
-  getAttendance: (): AttendanceRecord[] => {
-    const data = localStorage.getItem(KEYS.ATTENDANCE);
-    return data ? JSON.parse(data) : [];
+
+  getAttendance: async (): Promise<AttendanceRecord[]> => {
+    return await db.get('attendance');
   },
-  setAttendance: (records: AttendanceRecord[]) => {
-    localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(records));
+
+  setAttendance: async (records: AttendanceRecord[]) => {
+    const transaction = (db as any).db.transaction(['attendance'], 'readwrite');
+    const store = transaction.objectStore('attendance');
+    store.clear();
+    records.forEach(r => store.add(r));
   },
-  getDayAttendance: (): DayAttendance[] => {
-    const data = localStorage.getItem(KEYS.DAY_ATTENDANCE);
-    return data ? JSON.parse(data) : [];
+
+  getDayAttendance: async (): Promise<DayAttendance[]> => {
+    return await db.get('day_attendance');
   },
-  setDayAttendance: (records: DayAttendance[]) => {
-    localStorage.setItem(KEYS.DAY_ATTENDANCE, JSON.stringify(records));
+
+  setDayAttendance: async (records: DayAttendance[]) => {
+    const transaction = (db as any).db.transaction(['day_attendance'], 'readwrite');
+    const store = transaction.objectStore('day_attendance');
+    store.clear();
+    records.forEach(r => store.add(r));
   },
-  clearAll: () => {
+  
+  clearAll: async () => {
+    await db.clearAll();
     localStorage.clear();
     window.location.reload();
   }
