@@ -20,7 +20,6 @@
             padding: 0;
             overflow: hidden;
             height: 100vh;
-            /* Default Dark Midnight Aurora */
             background: #020617;
             background-image: 
                 radial-gradient(at 0% 0%, hsla(263,45%,12%,1) 0, transparent 50%), 
@@ -29,7 +28,6 @@
             color: #f8fafc;
         }
 
-        /* Light mode overrides if user manually switches back */
         html:not(.dark) body {
             background: #f8fafc;
             background-image: 
@@ -41,7 +39,6 @@
 
         #root { height: 100%; display: flex; flex-direction: column; }
 
-        /* Rich Glass Effect */
         .glass-premium {
             background: rgba(30, 41, 59, 0.4);
             backdrop-filter: blur(25px) saturate(160%);
@@ -60,7 +57,6 @@
                 inset 0 1px 1px rgba(255, 255, 255, 0.5);
         }
 
-        /* Rich iPhone-style Button */
         .btn-rich {
             position: relative;
             transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -74,7 +70,6 @@
             box-shadow: 0 2px 10px -4px rgba(0, 0, 0, 0.2);
         }
 
-        /* Card styles */
         .card-rich {
             background: rgba(15, 23, 42, 0.8);
             border-radius: 2.5rem;
@@ -95,7 +90,8 @@
   "imports": {
     "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/"
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
   }
 }
 </script>

@@ -1,55 +1,69 @@
 
-// Simulated Supabase client for email/password authentication
-export const supabase = {
-  auth: {
-    signIn: async (email: string, pass: string) => {
-      console.log(`[Supabase] Signing in with ${email}`);
-      await new Promise(r => setTimeout(r, 1000));
-      return { 
-        data: { 
-          user: { email, id: 'mock-uuid-123' },
-          session: { access_token: 'mock-token' }
-        }, 
-        error: null 
-      };
-    },
-    signUp: async (email: string, pass: string) => {
-      console.log(`[Supabase] Creating account for ${email}`);
-      await new Promise(r => setTimeout(r, 1200));
-      return { 
-        data: { 
-          user: { email, id: 'mock-uuid-123' } 
-        }, 
-        error: null 
-      };
-    },
-    signOut: async () => {
-      console.log("Signing out from Supabase...");
-      return { error: null };
-    }
-  },
-  from: (table: string) => ({
-    upsert: async (data: any) => {
-      console.log(`[Supabase] Upserting to ${table}:`, data);
-      return { error: null };
-    },
-    select: async () => {
-      return { data: [], error: null };
-    },
-    delete: function() { return this; },
-    eq: function() { return this; }
-  })
-};
+import { createClient } from '@supabase/supabase-js';
 
-export const syncWithSupabase = async (userEmail: string, data: any, table: string) => {
-  if (!userEmail) return;
+// REAL SUPABASE CREDENTIALS PROVIDED
+const SUPABASE_URL = 'https://iuhgrqubwsvuzrupeqbr.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_74z8jQ7xagPYP0IyAuWcWA_wbADSUN7';
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/**
+ * Syncs specific application data to Supabase tables.
+ */
+export const syncWithSupabase = async (userEmail: string, data: any, type: 'profile' | 'attendance' | 'day_attendance' | 'timetable') => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
   try {
-    await supabase.from(table).upsert({
-      email: userEmail,
-      content: JSON.stringify(data),
-      updated_at: new Date().toISOString()
-    });
+    if (type === 'profile') {
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        full_name: data.name,
+        institution_name: data.institutionName,
+        semester: data.semester,
+        attendance_goal: data.attendanceGoal,
+        use_advanced_mode: data.useAdvancedMode,
+        email: data.email,
+        updated_at: new Date().toISOString()
+      });
+    } else if (type === 'timetable') {
+      await supabase.from('timetable').delete().eq('user_id', user.id);
+      const slotsToInsert = data.map((slot: any) => ({
+        user_id: user.id,
+        subject_name: slot.subjectName,
+        day: slot.day,
+        start_time: slot.startTime,
+        end_time: slot.endTime,
+        faculty: slot.faculty,
+        color: slot.color
+      }));
+      if (slotsToInsert.length > 0) {
+        await supabase.from('timetable').insert(slotsToInsert);
+      }
+    } else if (type === 'attendance') {
+      const recordsToInsert = data.map((rec: any) => ({
+        id: `${user.id}-${rec.id}`,
+        user_id: user.id,
+        date: rec.date,
+        subject_id: rec.subjectId,
+        subject_name: rec.subjectName,
+        status: rec.status,
+        slot_id: rec.slotId
+      }));
+      if (recordsToInsert.length > 0) {
+        await supabase.from('attendance').upsert(recordsToInsert);
+      }
+    } else if (type === 'day_attendance') {
+      const dayRecords = data.map((rec: any) => ({
+        user_id: user.id,
+        date: rec.date,
+        status: rec.status
+      }));
+      if (dayRecords.length > 0) {
+        await supabase.from('day_attendance').upsert(dayRecords);
+      }
+    }
   } catch (err) {
-    console.error(`Cloud sync failed for ${table}:`, err);
+    console.error(`[Supabase Sync Error] Failed to sync ${type}:`, err);
   }
 };

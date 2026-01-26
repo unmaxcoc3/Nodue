@@ -29,138 +29,99 @@ const TimetableSetup: React.FC<TimetableSetupProps> = ({ slots, onAddSlot, onDel
   };
 
   return (
-    <div className="space-y-8 animate-slide-up">
-      <div className="flex justify-between items-center px-1">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Weekly</span>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">Schedule</h2>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex justify-between items-center px-4">
+        <div>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Weekly</span>
+          <h2 className="text-4xl font-black text-white tracking-tighter">Schedule</h2>
         </div>
         <button 
           onClick={() => setShowAdd(!showAdd)}
-          className={`w-12 h-12 flex items-center justify-center rounded-[1.5rem] shadow-lg transition-all active:scale-90 ${showAdd ? 'bg-rose-500 text-white shadow-rose-200' : 'bg-indigo-600 text-white shadow-indigo-200'}`}
+          className={`w-14 h-14 flex items-center justify-center rounded-[1.8rem] shadow-2xl transition-all active:scale-90 ${showAdd ? 'bg-rose-600 text-white rotate-45' : 'bg-indigo-600 text-white shadow-indigo-500/30'}`}
         >
-          <i className={`fa-solid ${showAdd ? 'fa-xmark' : 'fa-plus'} text-lg`}></i>
+          <i className="fa-solid fa-plus text-xl"></i>
         </button>
       </div>
 
       {showAdd && (
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 space-y-5 shadow-2xl">
-          <h3 className="text-lg font-extrabold tracking-tight">New Class</h3>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Subject</label>
-              <input 
-                type="text"
-                required
-                value={newSlot.subjectName}
-                onChange={e => setNewSlot({...newSlot, subjectName: e.target.value})}
-                placeholder="Maths, Physics, etc."
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl font-bold focus:ring-2 ring-indigo-500 outline-none"
-              />
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-6 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
+           <form onSubmit={handleSubmit} className="w-full max-w-sm card-rich p-8 bg-slate-900 border-white/10 space-y-6 shadow-[0_-20px_100px_rgba(0,0,0,0.8)] animate-in slide-in-from-bottom-10 duration-500">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-2xl font-black text-white tracking-tighter">New Lecture</h3>
+              <button type="button" onClick={() => setShowAdd(false)} className="text-slate-500 hover:text-white"><i className="fa-solid fa-xmark"></i></button>
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
+            
+            <div className="space-y-4">
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Day</label>
-                <select 
-                  value={newSlot.day}
-                  onChange={e => setNewSlot({...newSlot, day: parseInt(e.target.value)})}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl font-bold outline-none"
-                >
-                  {DAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}
-                </select>
+                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-2 block">Subject Name</label>
+                <input required type="text" value={newSlot.subjectName} onChange={e => setNewSlot({...newSlot, subjectName: e.target.value})} placeholder="e.g. Data Structures" className="w-full bg-black/40 border border-white/10 p-4 rounded-2xl font-bold text-white focus:ring-2 ring-indigo-500 outline-none" />
               </div>
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Faculty</label>
-                <input 
-                  type="text"
-                  placeholder="Optional"
-                  value={newSlot.faculty}
-                  onChange={e => setNewSlot({...newSlot, faculty: e.target.value})}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl font-bold outline-none"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-2 block">Day</label>
+                  <select value={newSlot.day} onChange={e => setNewSlot({...newSlot, day: parseInt(e.target.value)})} className="w-full bg-black/40 border border-white/10 p-4 rounded-2xl font-bold text-white outline-none appearance-none">
+                    {DAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-2 block">Faculty</label>
+                  <input type="text" placeholder="Optional" value={newSlot.faculty} onChange={e => setNewSlot({...newSlot, faculty: e.target.value})} className="w-full bg-black/40 border border-white/10 p-4 rounded-2xl font-bold text-white outline-none" />
+                </div>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Start Time</label>
-                <input 
-                  type="time"
-                  value={newSlot.startTime}
-                  onChange={e => setNewSlot({...newSlot, startTime: e.target.value})}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl font-bold outline-none"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-2 block">Start</label>
+                  <input type="time" value={newSlot.startTime} onChange={e => setNewSlot({...newSlot, startTime: e.target.value})} className="w-full bg-black/40 border border-white/10 p-4 rounded-2xl font-bold text-white outline-none" />
+                </div>
+                <div>
+                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-2 block">End</label>
+                  <input type="time" value={newSlot.endTime} onChange={e => setNewSlot({...newSlot, endTime: e.target.value})} className="w-full bg-black/40 border border-white/10 p-4 rounded-2xl font-bold text-white outline-none" />
+                </div>
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">End Time</label>
-                <input 
-                  type="time"
-                  value={newSlot.endTime}
-                  onChange={e => setNewSlot({...newSlot, endTime: e.target.value})}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl font-bold outline-none"
-                />
+                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2 block">Accent Color</label>
+                <div className="flex flex-wrap gap-3 px-1">
+                  {SUBJECT_COLORS.map(c => (
+                    <button key={c} type="button" onClick={() => setNewSlot({...newSlot, color: c})} className={`w-8 h-8 rounded-full border-2 transition-all active:scale-75 ${newSlot.color === c ? 'border-white ring-2 ring-indigo-500 scale-125' : 'border-transparent opacity-40'}`} style={{ backgroundColor: c }} />
+                  ))}
+                </div>
               </div>
             </div>
-
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Theme</label>
-              <div className="flex flex-wrap gap-3">
-                {SUBJECT_COLORS.map(c => (
-                  <button 
-                    key={c}
-                    type="button"
-                    onClick={() => setNewSlot({...newSlot, color: c})}
-                    className={`w-8 h-8 rounded-full border-4 transition-all active:scale-75 ${newSlot.color === c ? 'border-white dark:border-slate-700 ring-2 ring-indigo-500 scale-125' : 'border-transparent opacity-40'}`}
-                    style={{ backgroundColor: c }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <button type="submit" className="w-full bg-indigo-600 text-white font-black py-5 rounded-3xl shadow-xl shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-[0.98]">
-            Add to Timetable
-          </button>
-        </form>
+            <button type="submit" className="w-full bg-indigo-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-indigo-500/20 active:scale-95 transition-all text-xs uppercase tracking-[0.2em] mt-4">Save Session</button>
+          </form>
+        </div>
       )}
 
-      <div className="space-y-10">
-        {DAYS.map((dayName, dayIndex) => {
-          const daySlots = slots.filter(s => s.day === dayIndex).sort((a, b) => a.startTime.localeCompare(b.startTime));
+      <div className="space-y-12 pb-24">
+        {DAYS.map((dayName, dayIdx) => {
+          const daySlots = slots.filter(s => s.day === dayIdx).sort((a, b) => a.startTime.localeCompare(b.startTime));
           if (daySlots.length === 0) return null;
-
           return (
-            <div key={dayName} className="space-y-4">
-              <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-indigo-500/60 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                {dayName}
-              </h3>
-              <div className="grid gap-4">
+            <div key={dayName} className="space-y-6">
+              <div className="flex items-center gap-4 px-4">
+                 <h3 className="text-[11px] font-black uppercase tracking-[0.5em] text-indigo-500">{dayName}</h3>
+                 <div className="h-px flex-1 bg-white/5"></div>
+              </div>
+              <div className="space-y-4 px-2">
                 {daySlots.map(slot => (
-                  <div key={slot.id} className="group flex bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm transition-all hover:shadow-md">
-                    <div className="w-3" style={{ backgroundColor: slot.color }}></div>
-                    <div className="flex-1 p-5 flex justify-between items-center">
-                      <div className="flex flex-col">
-                        <h4 className="font-extrabold text-slate-900 dark:text-slate-100 tracking-tight text-lg">{slot.subjectName}</h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <i className="fa-regular fa-clock text-slate-300 text-[10px]"></i>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                            {slot.startTime} — {slot.endTime}
-                          </p>
+                  <div key={slot.id} className="group card-rich p-6 flex bg-slate-900/30 border-white/5 hover:border-white/10 transition-all overflow-hidden relative">
+                    <div className="absolute top-0 left-0 w-1.5 h-full" style={{ backgroundColor: slot.color }}></div>
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    
+                    <div className="flex-1 flex justify-between items-center ml-4">
+                      <div>
+                        <h4 className="font-black text-white tracking-tighter text-xl">{slot.subjectName}</h4>
+                        <div className="flex items-center gap-3 mt-2">
+                          <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1 rounded-xl border border-white/5">
+                            <i className="fa-regular fa-clock text-indigo-500 text-[10px]"></i>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{slot.startTime} — {slot.endTime}</span>
+                          </div>
                           {slot.faculty && (
-                            <>
-                              <span className="text-slate-200">|</span>
-                              <span className="text-[10px] text-indigo-500/60 font-black uppercase tracking-widest">{slot.faculty}</span>
-                            </>
+                            <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest italic">{slot.faculty}</span>
                           )}
                         </div>
                       </div>
-                      <button 
-                        onClick={() => onDeleteSlot(slot.id)}
-                        className="w-10 h-10 rounded-2xl flex items-center justify-center text-slate-200 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all active:scale-90"
-                      >
+                      <button onClick={() => onDeleteSlot(slot.id)} className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-700 hover:text-rose-500 hover:bg-rose-500/10 transition-all active:scale-90 border border-white/5">
                         <i className="fa-solid fa-trash-can text-sm"></i>
                       </button>
                     </div>
@@ -172,12 +133,12 @@ const TimetableSetup: React.FC<TimetableSetupProps> = ({ slots, onAddSlot, onDel
         })}
 
         {slots.length === 0 && !showAdd && (
-          <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-slate-800 flex flex-col items-center">
-            <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-900/10 rounded-[2rem] flex items-center justify-center text-indigo-300 text-3xl mb-6">
-              <i className="fa-solid fa-calendar-xmark"></i>
+          <div className="text-center py-24 bg-slate-900/40 rounded-[3rem] border border-white/5 flex flex-col items-center mx-4">
+            <div className="w-24 h-24 bg-indigo-500/5 rounded-[2.5rem] flex items-center justify-center text-indigo-500/40 text-4xl mb-8 border border-white/5">
+              <i className="fa-solid fa-calendar-plus"></i>
             </div>
-            <h4 className="text-lg font-extrabold text-slate-800 dark:text-slate-200">No classes yet</h4>
-            <p className="text-slate-400 text-sm font-semibold mt-2 max-w-[200px] leading-relaxed">Fill your weekly schedule to enable subject tracking.</p>
+            <h4 className="text-2xl font-black text-white tracking-tighter">Your Schedule is Clear</h4>
+            <p className="text-slate-500 text-sm font-bold mt-3 max-w-[220px] leading-relaxed opacity-60">Add your lectures to start tracking session-wise progress.</p>
           </div>
         )}
       </div>

@@ -16,36 +16,24 @@ const Dashboard: React.FC<DashboardProps> = ({ user, attendance, dayAttendance, 
     const workingDays = present + absent;
     const percentage = workingDays > 0 ? (present / workingDays) * 100 : 0;
     const holidays = dayAttendance.filter(d => d.status === 'HOLIDAY').length;
-    const goal = user.attendanceGoal;
+    const target = user.attendanceGoal / 100;
 
-    // Calculation for "How many days to attend" or "How many to skip"
-    let forecastMessage = "";
+    let forecastMessage = "Start marking attendance";
     let forecastValue = 0;
     let forecastType: 'BUFFER' | 'REQUIRED' | 'NEUTRAL' = 'NEUTRAL';
 
-    const target = goal / 100;
-
-    if (workingDays === 0) {
-      forecastMessage = "Start marking to see forecast";
-    } else if (percentage < goal) {
-      // Below goal: (present + x) / (workingDays + x) = target
-      // present + x = target * workingDays + target * x
-      // x - target * x = target * workingDays - present
-      // x (1 - target) = target * workingDays - present
-      // x = (target * workingDays - present) / (1 - target)
-      forecastValue = Math.ceil((target * workingDays - present) / (1 - target));
-      forecastMessage = `Attend next ${forecastValue} classes to reach ${goal}%`;
-      forecastType = 'REQUIRED';
-    } else {
-      // Above goal: present / (workingDays + x) = target
-      // present = target * workingDays + target * x
-      // target * x = present - target * workingDays
-      // x = (present / target) - workingDays
-      forecastValue = Math.floor((present / target) - workingDays);
-      forecastMessage = forecastValue > 0 
-        ? `You can skip next ${forecastValue} classes` 
-        : "You are exactly on track";
-      forecastType = forecastValue > 0 ? 'BUFFER' : 'NEUTRAL';
+    if (workingDays > 0) {
+      if (percentage < user.attendanceGoal) {
+        // x = (target * total - present) / (1 - target)
+        forecastValue = Math.ceil((target * workingDays - present) / (1 - target));
+        forecastMessage = `Attend next ${forecastValue} ${forecastValue === 1 ? 'session' : 'sessions'} to hit ${user.attendanceGoal}%`;
+        forecastType = 'REQUIRED';
+      } else {
+        // y = (present / target) - total
+        forecastValue = Math.floor((present / target) - workingDays);
+        forecastMessage = forecastValue > 0 ? `Safe to skip next ${forecastValue} ${forecastValue === 1 ? 'session' : 'sessions'}` : "Perfectly on track!";
+        forecastType = forecastValue > 0 ? 'BUFFER' : 'NEUTRAL';
+      }
     }
 
     return { present, absent, workingDays, percentage, holidays, forecastValue, forecastMessage, forecastType };
@@ -54,113 +42,118 @@ const Dashboard: React.FC<DashboardProps> = ({ user, attendance, dayAttendance, 
   const onTrack = stats.percentage >= user.attendanceGoal;
 
   return (
-    <div className="space-y-8 animate-in">
-      {/* Dynamic Progress Card */}
-      <div className={`relative p-10 rounded-[3.5rem] overflow-hidden shadow-2xl btn-rich ${
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+      {/* Main Progress Ring Card */}
+      <div className={`relative p-12 rounded-[3.5rem] overflow-hidden shadow-2xl transition-all duration-700 ${
         onTrack 
-          ? 'bg-gradient-to-br from-indigo-500 via-indigo-600 to-blue-800' 
-          : 'bg-gradient-to-br from-rose-500 via-pink-600 to-rose-700'
+          ? 'bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-900 shadow-indigo-500/40' 
+          : 'bg-gradient-to-br from-rose-600 via-rose-700 to-red-900 shadow-rose-500/40'
       }`}>
-        <div className="absolute top-0 right-0 w-48 h-48 bg-white/20 rounded-full -mr-20 -mt-20 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-40 h-40 bg-black/10 rounded-full -ml-20 -mb-20 blur-2xl"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full -mr-24 -mt-24 blur-[80px]"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/30 rounded-full -ml-20 -mb-20 blur-[60px]"></div>
 
         <div className="relative z-10 flex flex-col items-center">
-          <div className="px-6 py-2 rounded-full bg-white/20 backdrop-blur-md border border-white/20 mb-8">
-            <span className="text-[10px] font-black text-white uppercase tracking-[0.3em]">Session Progress</span>
+          <div className="px-5 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-10">
+            <span className="text-[10px] font-black text-white uppercase tracking-[0.4em]">Current Standing</span>
           </div>
           
-          <div className="text-9xl font-black text-white tracking-tighter flex items-start drop-shadow-2xl">
-            {Math.round(stats.percentage)}
-            <span className="text-4xl mt-6 opacity-60 ml-1">%</span>
-          </div>
-          
-          <div className="mt-10 w-full space-y-6">
-             <div className="h-4 w-full bg-black/20 rounded-full overflow-hidden p-1 shadow-inner">
-                <div 
-                  className="h-full bg-gradient-to-r from-white/90 to-white rounded-full transition-all duration-1000 shadow-[0_0_20px_rgba(255,255,255,0.5)]" 
-                  style={{ width: `${Math.max(stats.percentage, 5)}%` }}
-                ></div>
+          <div className="relative">
+             <div className="text-[9rem] font-black text-white tracking-tighter flex items-start drop-shadow-2xl leading-none">
+                {Math.round(stats.percentage)}
+                <span className="text-4xl mt-12 opacity-50 ml-1">%</span>
              </div>
-             
-             <div className="flex justify-between items-center text-white/90 px-2">
+             <div className={`absolute -bottom-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-2xl text-[9px] font-black uppercase tracking-widest border shadow-2xl backdrop-blur-xl ${onTrack ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}>
+                {onTrack ? 'Target Achieved' : `Below ${user.attendanceGoal}% Target`}
+             </div>
+          </div>
+          
+          <div className="mt-14 w-full space-y-6">
+             <div className="relative h-6 w-full bg-black/30 rounded-full overflow-hidden p-1 shadow-inner border border-white/5">
+                {/* Progress Bar */}
+                <div 
+                  className={`h-full rounded-full transition-all duration-[2000ms] ease-out shadow-[0_0_25px_rgba(255,255,255,0.4)] ${onTrack ? 'bg-gradient-to-r from-emerald-300 to-white' : 'bg-gradient-to-r from-white/40 to-white'}`}
+                  style={{ width: `${Math.max(stats.percentage, 4)}%` }}
+                ></div>
+                
+                {/* Goal Marker Line */}
+                <div 
+                  className="absolute top-0 bottom-0 w-1 bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)] z-20"
+                  style={{ left: `${user.attendanceGoal}%` }}
+                >
+                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[8px] font-black text-white/60 uppercase tracking-tighter">
+                    Goal
+                  </div>
+                </div>
+             </div>
+             <div className="flex justify-between items-center text-white/80 px-2">
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Status</span>
-                  <span className="text-sm font-bold uppercase tracking-tight">
-                    {onTrack ? 'Excellent Pace' : 'Below Target'}
-                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Min Threshold</span>
+                  <span className="text-base font-black tracking-tight">{user.attendanceGoal}%</span>
                 </div>
                 <div className="flex flex-col text-right">
-                  <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Goal</span>
-                  <span className="text-sm font-bold uppercase tracking-tight">{user.attendanceGoal}%</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Actual Attendance</span>
+                  <span className="text-base font-black tracking-tight">{stats.present} / {stats.workingDays}</span>
                 </div>
              </div>
           </div>
         </div>
       </div>
 
-      {/* Smart Forecast Card */}
-      <div className="card-rich p-6 border-white/5 relative overflow-hidden">
-        <div className="flex items-center gap-4">
-          <div className={`w-14 h-14 rounded-3xl flex items-center justify-center text-2xl shadow-inner ${
-            stats.forecastType === 'REQUIRED' ? 'bg-rose-500/10 text-rose-500' : 
-            stats.forecastType === 'BUFFER' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-500/10 text-slate-500'
-          }`}>
-            <i className={`fa-solid ${stats.forecastType === 'REQUIRED' ? 'fa-arrow-trend-up' : stats.forecastType === 'BUFFER' ? 'fa-shield-heart' : 'fa-info-circle'}`}></i>
-          </div>
-          <div className="flex-1">
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Smart Forecast</p>
-            <h3 className="font-bold text-slate-800 dark:text-white leading-tight">
-              {stats.forecastMessage}
-            </h3>
-          </div>
-          {stats.forecastValue > 0 && (
-            <div className={`text-3xl font-black ${stats.forecastType === 'REQUIRED' ? 'text-rose-500' : 'text-emerald-500'}`}>
-              {stats.forecastValue}
-            </div>
-          )}
+      {/* Forecast Card */}
+      <div className="card-rich p-8 border border-white/5 shadow-2xl bg-slate-900/40 backdrop-blur-xl flex items-center gap-6">
+        <div className={`w-16 h-16 rounded-[1.8rem] flex items-center justify-center text-3xl shadow-inner ${
+          stats.forecastType === 'REQUIRED' ? 'bg-rose-500/20 text-rose-500' : 
+          stats.forecastType === 'BUFFER' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-indigo-500/20 text-indigo-500'
+        }`}>
+          <i className={`fa-solid ${stats.forecastType === 'REQUIRED' ? 'fa-triangle-exclamation' : stats.forecastType === 'BUFFER' ? 'fa-shield-heart' : 'fa-lightbulb'}`}></i>
+        </div>
+        <div className="flex-1">
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 opacity-60">Status Analysis</p>
+          <h3 className="font-extrabold text-slate-900 dark:text-white leading-snug text-lg tracking-tight">
+            {stats.forecastMessage}
+          </h3>
         </div>
       </div>
 
-      {/* Metric Tiles */}
-      <div className="grid grid-cols-2 gap-5">
-        <MetricTile label="Total Classes" value={stats.workingDays} icon="fa-layer-group" color="indigo" />
-        <MetricTile label="Present" value={stats.present} icon="fa-check-circle" color="emerald" />
-        <MetricTile label="Absent" value={stats.absent} icon="fa-times-circle" color="rose" />
-        <MetricTile label="Free Days" value={stats.holidays} icon="fa-umbrella-beach" color="amber" />
+      {/* Grid Metrics */}
+      <div className="grid grid-cols-2 gap-6">
+        <MetricCard label="Working Days" value={stats.workingDays} icon="fa-calendar-day" color="indigo" />
+        <MetricCard label="Present" value={stats.present} icon="fa-circle-check" color="emerald" />
+        <MetricCard label="Absent" value={stats.absent} icon="fa-circle-xmark" color="rose" />
+        <MetricCard label="Holidays" value={stats.holidays} icon="fa-couch" color="amber" />
       </div>
 
-      {/* Subject Trend */}
+      {/* Subject Insights */}
       {user.useAdvancedMode && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center px-2">
-            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Deep Insights</h3>
-            <span className="w-10 h-1 bg-indigo-200 dark:bg-indigo-900/40 rounded-full"></span>
+        <div className="space-y-6 pt-4 pb-12">
+          <div className="flex items-center gap-3 px-2">
+            <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em]">Lecture Breakdown</h3>
+            <div className="h-px flex-1 bg-white/5"></div>
           </div>
           <div className="space-y-4">
-            {Array.from(new Set(timetable.map(t => t.subjectName))).map(name => {
-              const subName = String(name);
-              const subjectRecords = attendance.filter(r => r.subjectName === subName && r.status !== 'HOLIDAY');
-              const sPresent = subjectRecords.filter(r => r.status === 'PRESENT').length;
-              const sTotal = subjectRecords.length;
-              const sPct = sTotal > 0 ? (sPresent / sTotal) * 100 : 0;
-              const subOnTrack = sPct >= user.attendanceGoal;
+            {Array.from(new Set(timetable.map(t => t.subjectName))).map(sub => {
+              const records = attendance.filter(r => r.subjectName === sub);
+              const sPres = records.filter(r => r.status === 'PRESENT').length;
+              const sTotal = records.length;
+              const sPct = sTotal > 0 ? (sPres / sTotal) * 100 : 0;
+              const isOk = sPct >= user.attendanceGoal;
 
               return (
-                <div key={subName} className="card-rich p-6 flex items-center justify-between transition-all active:scale-[0.98]">
-                  <div className="flex gap-4 items-center">
-                    <div className={`w-14 h-14 rounded-3xl flex items-center justify-center text-2xl font-black ${
-                      subOnTrack ? 'bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10' : 'bg-rose-50 text-rose-500 dark:bg-rose-500/10'
+                <div key={sub} className="card-rich p-6 flex items-center justify-between group hover:scale-[1.02] transition-transform bg-slate-900/30 border-white/5">
+                  <div className="flex gap-5 items-center">
+                    <div className={`w-14 h-14 rounded-3xl flex items-center justify-center text-xl font-black shadow-inner ${
+                      isOk ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
                     }`}>
-                      {subName.charAt(0)}
+                      {sub.charAt(0)}
                     </div>
                     <div>
-                      <h4 className="font-extrabold text-slate-800 dark:text-slate-100 text-lg tracking-tight">{subName}</h4>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        {sPresent} of {sTotal} Attended
+                      <h4 className="font-black text-slate-900 dark:text-slate-100 text-lg tracking-tighter leading-tight">{sub}</h4>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-0.5">
+                        {sPres} / {sTotal} Sessions
                       </p>
                     </div>
                   </div>
-                  <div className={`text-2xl font-black ${subOnTrack ? 'text-emerald-500' : 'text-rose-500'}`}>
+                  <div className={`text-2xl font-black ${isOk ? 'text-emerald-500' : 'text-rose-500'}`}>
                     {Math.round(sPct)}%
                   </div>
                 </div>
@@ -173,21 +166,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, attendance, dayAttendance, 
   );
 };
 
-const MetricTile: React.FC<{ label: string; value: number; icon: string; color: string }> = ({ label, value, icon, color }) => {
-  const themes: any = {
-    indigo: 'bg-indigo-500 shadow-indigo-500/20',
-    emerald: 'bg-emerald-500 shadow-emerald-500/20',
-    rose: 'bg-rose-500 shadow-rose-500/20',
-    amber: 'bg-amber-500 shadow-amber-500/20'
+const MetricCard: React.FC<{ label: string; value: number; icon: string; color: string }> = ({ label, value, icon, color }) => {
+  const styles: any = {
+    indigo: 'bg-indigo-600/10 text-indigo-500',
+    emerald: 'bg-emerald-600/10 text-emerald-500',
+    rose: 'bg-rose-600/10 text-rose-500',
+    amber: 'bg-amber-600/10 text-amber-500'
   };
   return (
-    <div className="card-rich p-7 flex flex-col gap-4 group transition-all hover:translate-y-[-4px]">
-      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg transform group-hover:rotate-12 transition-transform ${themes[color]}`}>
-        <i className={`fa-solid ${icon} text-lg`}></i>
+    <div className="card-rich p-8 flex flex-col gap-6 group hover:translate-y-[-6px] transition-all bg-slate-900/40 border-white/5">
+      <div className={`w-14 h-14 rounded-[1.8rem] flex items-center justify-center shadow-xl transition-transform group-hover:rotate-6 ${styles[color]}`}>
+        <i className={`fa-solid ${icon} text-xl`}></i>
       </div>
       <div>
-        <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{value}</div>
-        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 leading-tight">{label}</div>
+        <div className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">{value}</div>
+        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1 opacity-60 leading-tight">{label}</div>
       </div>
     </div>
   );
