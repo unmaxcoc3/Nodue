@@ -48,7 +48,6 @@ const App: React.FC = () => {
             setUser(mappedUser);
             await storage.setUser(mappedUser);
           } else {
-            // Profile missing but session exists - likely just signed up
             const savedUser = await storage.getUser();
             if (savedUser) setUser(savedUser);
           }
@@ -163,21 +162,19 @@ const App: React.FC = () => {
           isSynced: true
         };
         
-        // Immediate local save
         await storage.setUser(newUser);
         setUser(newUser);
         
-        // If session is auto-created (confirmation off), sync immediately
         if (data.session) {
           await syncWithSupabase(email, newUser, 'profile');
         } else {
-          alert("Account created! If you have email confirmation enabled in Supabase, please verify your email before signing in.");
+          alert("Account created! If you have email confirmation enabled, verify it, then sign in. Otherwise, just try signing in now.");
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           if (error.message === "Invalid login credentials") {
-            throw new Error("Invalid email or password. If you haven't created an account yet, please switch to Sign Up.");
+            throw new Error("Invalid email or password. If you haven't created an account yet, please use 'Sign Up' first.");
           }
           throw error;
         }
