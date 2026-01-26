@@ -29,7 +29,7 @@ const App: React.FC = () => {
         
         if (session) {
           const [profileRes, timetableRes, attRes, dayAttRes] = await Promise.all([
-            supabase.from('profiles').select('*').eq('id', session.user.id).single(),
+            supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle(),
             supabase.from('timetable').select('*').eq('user_id', session.user.id),
             supabase.from('attendance').select('*').eq('user_id', session.user.id),
             supabase.from('day_attendance').select('*').eq('user_id', session.user.id)
@@ -37,16 +37,20 @@ const App: React.FC = () => {
 
           if (profileRes.data) {
             const mappedUser: UserProfile = {
-              name: profileRes.data.full_name,
-              institutionName: profileRes.data.institution_name,
-              semester: profileRes.data.semester,
-              attendanceGoal: profileRes.data.attendance_goal || 75,
-              useAdvancedMode: profileRes.data.use_advanced_mode,
+              name: profileRes.data.full_name || "Scholar",
+              institutionName: profileRes.data.institution_name || "Institution",
+              semester: profileRes.data.semester || "Semester 1",
+              attendanceGoal: profileRes.data.attendance_goal ?? 75,
+              useAdvancedMode: profileRes.data.use_advanced_mode ?? true,
               email: profileRes.data.email,
               isSynced: true
             };
             setUser(mappedUser);
             await storage.setUser(mappedUser);
+          } else {
+            // Profile missing but session exists - likely just signed up
+            const savedUser = await storage.getUser();
+            if (savedUser) setUser(savedUser);
           }
 
           if (timetableRes.data) {
@@ -159,17 +163,28 @@ const App: React.FC = () => {
           isSynced: true
         };
         
+        // Immediate local save
         await storage.setUser(newUser);
         setUser(newUser);
-        await syncWithSupabase(email, newUser, 'profile');
-        setLastSynced(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        
+        // If session is auto-created (confirmation off), sync immediately
+        if (data.session) {
+          await syncWithSupabase(email, newUser, 'profile');
+        } else {
+          alert("Account created! If you have email confirmation enabled in Supabase, please verify your email before signing in.");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) {
+          if (error.message === "Invalid login credentials") {
+            throw new Error("Invalid email or password. If you haven't created an account yet, please switch to Sign Up.");
+          }
+          throw error;
+        }
         window.location.reload();
       }
     } catch (err: any) {
-      alert(err.message || "Authentication error. Check your credentials.");
+      alert(err.message || "An authentication error occurred.");
     } finally {
       setAuthLoading(false);
     }
@@ -329,7 +344,7 @@ const App: React.FC = () => {
                       <div className="w-11 h-11 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400"><i className="fa-solid fa-bullseye"></i></div>
                       <div>
                         <span className="font-bold text-sm text-slate-200 block">Attendance Goal</span>
-                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Target for "No Due" status</span>
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Threshold for Safe status</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -348,6 +363,7 @@ const App: React.FC = () => {
                     type="range" 
                     min="0" 
                     max="100" 
+                    step="1"
                     value={user.attendanceGoal} 
                     onChange={e => handleUpdateUser({...user, attendanceGoal: parseInt(e.target.value)})} 
                     className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
