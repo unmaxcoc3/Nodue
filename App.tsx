@@ -168,20 +168,15 @@ const App: React.FC = () => {
         if (data.session) {
           await syncWithSupabase(email, newUser, 'profile');
         } else {
-          alert("Account created! If you have email confirmation enabled, verify it, then sign in. Otherwise, just try signing in now.");
+          alert("Success! Check your email or try signing in if verification is disabled.");
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-          if (error.message === "Invalid login credentials") {
-            throw new Error("Invalid email or password. If you haven't created an account yet, please use 'Sign Up' first.");
-          }
-          throw error;
-        }
+        if (error) throw error;
         window.location.reload();
       }
     } catch (err: any) {
-      alert(err.message || "An authentication error occurred.");
+      alert(err.message || "Authentication error occurred.");
     } finally {
       setAuthLoading(false);
     }
@@ -189,14 +184,14 @@ const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-12">
-        <div className="relative">
-          <div className="w-20 h-20 border-4 border-indigo-500/10 border-t-indigo-500 rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-12 text-center">
+        <div className="relative mb-10">
+          <div className="w-20 h-20 border-8 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-             <i className="fa-solid fa-graduation-cap text-indigo-500 text-xl animate-pulse"></i>
+             <i className="fa-solid fa-graduation-cap text-white text-2xl"></i>
           </div>
         </div>
-        <p className="mt-8 text-indigo-400 font-black text-[10px] uppercase tracking-[0.4em]">nodue security</p>
+        <p className="text-white font-black text-sm uppercase tracking-[0.4em]">nodue security</p>
       </div>
     );
   }
@@ -204,67 +199,66 @@ const App: React.FC = () => {
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#020617] relative overflow-hidden">
-        <div className="absolute top-0 -left-10 w-72 h-72 bg-indigo-600/20 rounded-full blur-[100px] animate-pulse"></div>
-        <div className="absolute bottom-0 -right-10 w-72 h-72 bg-blue-600/20 rounded-full blur-[100px] animate-pulse delay-700"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-indigo-950/40 to-black pointer-events-none"></div>
 
-        <div className="w-full max-w-sm space-y-12 animate-in fade-in zoom-in duration-1000">
+        <div className="w-full max-w-sm space-y-12 relative z-10 animate-in fade-in zoom-in duration-700">
           <div className="text-center space-y-4">
-             <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 via-indigo-600 to-blue-700 text-white rounded-[2.5rem] flex items-center justify-center mx-auto text-4xl shadow-[0_32px_64px_-12px_rgba(79,70,229,0.5)] transform -rotate-6 transition-transform hover:rotate-3 btn-rich">
+             <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 via-indigo-600 to-blue-700 text-white rounded-[2.5rem] flex items-center justify-center mx-auto text-4xl shadow-2xl border border-white/20">
                 <i className="fa-solid fa-graduation-cap"></i>
              </div>
              <div>
-               <h1 className="text-5xl font-black text-white tracking-tighter">nodue</h1>
-               <p className="text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-2 opacity-60">The Platinum Tracker</p>
+               <h1 className="text-6xl font-black text-white tracking-tighter text-glow">nodue</h1>
+               <p className="text-indigo-300 font-black uppercase tracking-[0.4em] text-xs mt-3">Platinum Tracker</p>
              </div>
           </div>
 
-          <div className="card-rich p-8 space-y-6 bg-slate-900/40 backdrop-blur-3xl border border-white/5 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.6)]">
-            <div className="flex bg-black/40 p-1.5 rounded-2xl">
-              <button onClick={() => setIsSignUp(false)} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${!isSignUp ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500'}`}>Sign In</button>
-              <button onClick={() => setIsSignUp(true)} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${isSignUp ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500'}`}>Sign Up</button>
+          <div className="glass-premium p-8 space-y-6 rounded-[2.5rem] border-white/30">
+            <div className="flex bg-black/50 p-1.5 rounded-2xl border border-white/10">
+              <button onClick={() => setIsSignUp(false)} className={`flex-1 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${!isSignUp ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-400'}`}>Sign In</button>
+              <button onClick={() => setIsSignUp(true)} className={`flex-1 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${isSignUp ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-400'}`}>Sign Up</button>
             </div>
 
-            <form onSubmit={handleAuth} className="space-y-4 text-left">
+            <form onSubmit={handleAuth} className="space-y-6 text-left">
               {isSignUp && (
-                <div className="animate-in slide-in-from-top-4 duration-500">
-                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-2 block">Full Name</label>
-                  <input name="name" required placeholder="Alex Rivers" className="w-full glass-premium border-none rounded-2xl p-4 text-sm font-bold text-white placeholder:text-slate-700 focus:ring-2 ring-indigo-500 outline-none bg-black/30" />
+                <div className="animate-in slide-in-from-top-4">
+                  <label className="text-xs font-black text-white uppercase tracking-widest mb-2 ml-2 block">Full Name</label>
+                  <input name="name" required placeholder="John Doe" className="w-full bg-black/60 border border-white/20 rounded-2xl p-4 text-base font-bold text-white placeholder:text-slate-500 focus:ring-2 ring-indigo-500 outline-none transition-all" />
                 </div>
               )}
 
               <div>
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-2 block">Email Address</label>
-                <input name="email" type="email" required placeholder="name@college.edu" className="w-full glass-premium border-none rounded-2xl p-4 text-sm font-bold text-white placeholder:text-slate-700 focus:ring-2 ring-indigo-500 outline-none bg-black/30" />
+                <label className="text-xs font-black text-white uppercase tracking-widest mb-2 ml-2 block">Email Address</label>
+                <input name="email" type="email" required placeholder="you@college.edu" className="w-full bg-black/60 border border-white/20 rounded-2xl p-4 text-base font-bold text-white placeholder:text-slate-500 focus:ring-2 ring-indigo-500 outline-none transition-all" />
               </div>
 
               <div>
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-2 block">Password</label>
-                <input name="password" type="password" required placeholder="••••••••" className="w-full glass-premium border-none rounded-2xl p-4 text-sm font-bold text-white placeholder:text-slate-700 focus:ring-2 ring-indigo-500 outline-none bg-black/30" />
+                <label className="text-xs font-black text-white uppercase tracking-widest mb-2 ml-2 block">Password</label>
+                <input name="password" type="password" required placeholder="••••••••" className="w-full bg-black/60 border border-white/20 rounded-2xl p-4 text-base font-bold text-white placeholder:text-slate-500 focus:ring-2 ring-indigo-500 outline-none transition-all" />
               </div>
 
               {isSignUp && (
-                <div className="space-y-4 animate-in slide-in-from-top-4 duration-700">
+                <div className="space-y-6 animate-in slide-in-from-top-4">
                   <div>
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-2 block">Institution</label>
-                    <input name="institution" required placeholder="e.g. Stanford University" className="w-full glass-premium border-none rounded-2xl p-4 text-sm font-bold text-white placeholder:text-slate-700 focus:ring-2 ring-indigo-500 outline-none bg-black/30" />
+                    <label className="text-xs font-black text-white uppercase tracking-widest mb-2 ml-2 block">Institution</label>
+                    <input name="institution" required placeholder="University Name" className="w-full bg-black/60 border border-white/20 rounded-2xl p-4 text-base font-bold text-white placeholder:text-slate-500 focus:ring-2 ring-indigo-500 outline-none transition-all" />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-5">
                     <div>
-                      <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-2 block">Semester</label>
-                      <select name="semester" className="w-full glass-premium border-none rounded-2xl p-4 text-sm font-bold text-white focus:ring-2 ring-indigo-500 outline-none bg-black/30 appearance-none">
-                        {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={`Semester ${n}`}>Semester {n}</option>)}
+                      <label className="text-xs font-black text-white uppercase tracking-widest mb-2 ml-2 block">Semester</label>
+                      <select name="semester" className="w-full bg-black/60 border border-white/20 rounded-2xl p-4 text-sm font-bold text-white focus:ring-2 ring-indigo-500 outline-none appearance-none">
+                        {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={`Semester ${n}`} className="bg-slate-900">Sem {n}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-2 block">Goal %</label>
-                      <input name="goal" type="number" defaultValue="75" min="0" max="100" className="w-full glass-premium border-none rounded-2xl p-4 text-sm font-bold text-white placeholder:text-slate-700 focus:ring-2 ring-indigo-500 outline-none bg-black/30" />
+                      <label className="text-xs font-black text-white uppercase tracking-widest mb-2 ml-2 block">Goal %</label>
+                      <input name="goal" type="number" defaultValue="75" min="0" max="100" className="w-full bg-black/60 border border-white/20 rounded-2xl p-4 text-base font-bold text-white focus:ring-2 ring-indigo-500 outline-none transition-all" />
                     </div>
                   </div>
                 </div>
               )}
               
-              <button disabled={authLoading} className="w-full bg-indigo-600 text-white font-black py-5 mt-4 rounded-2xl shadow-xl shadow-indigo-500/30 active:scale-95 text-xs uppercase tracking-[0.2em] btn-rich flex items-center justify-center gap-3">
-                {authLoading ? <i className="fa-solid fa-circle-notch animate-spin"></i> : (isSignUp ? 'Create Account' : 'Sign In')}
+              <button disabled={authLoading} className="w-full bg-indigo-600 text-white font-black py-5 mt-6 rounded-2xl shadow-xl shadow-indigo-500/40 active:scale-95 text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-3 border border-white/20">
+                {authLoading ? <i className="fa-solid fa-circle-notch animate-spin"></i> : (isSignUp ? 'Create Vault' : 'Secure Entry')}
               </button>
             </form>
           </div>
@@ -315,33 +309,34 @@ const App: React.FC = () => {
       )}
       {view === ViewMode.SETTINGS && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
-          <div className="card-rich p-10 text-center relative overflow-hidden bg-slate-900/40 backdrop-blur-xl border-white/5">
-             <div className="w-24 h-24 bg-gradient-to-tr from-indigo-500 to-blue-600 text-white rounded-[2rem] flex items-center justify-center text-4xl font-black mx-auto mb-6 shadow-2xl border border-white/20">
+          <div className="card-rich p-10 text-center relative overflow-hidden bg-slate-900/60 border-white/20">
+             <div className="w-24 h-24 bg-gradient-to-tr from-indigo-500 to-blue-600 text-white rounded-[2rem] flex items-center justify-center text-4xl font-black mx-auto mb-6 shadow-2xl border border-white/30">
                {user.name[0]}
              </div>
              <h3 className="font-black text-3xl tracking-tight text-white">{user.name}</h3>
              <div className="flex flex-col gap-3 mt-4 items-center">
-                <span className="bg-indigo-500/10 text-indigo-400 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-indigo-500/20">
+                <span className="bg-indigo-600 text-white px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg">
                    {user.institutionName}
                 </span>
                 <div className="flex gap-2">
-                  <span className="bg-slate-800/80 text-slate-400 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest">{user.semester}</span>
-                  <span className="bg-emerald-500/10 text-emerald-500 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border border-emerald-500/20 flex items-center gap-1.5">
-                    <i className="fa-solid fa-cloud-bolt text-[8px]"></i> Realtime Sync
+                  <span className="bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-white/10">{user.semester}</span>
+                  <span className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-1.5 shadow-md border border-white/10">
+                    <i className="fa-solid fa-cloud-bolt text-[10px]"></i> Active Sync
                   </span>
                 </div>
              </div>
-             <div className="mt-12 space-y-2 text-left border-t border-white/5 pt-8">
+             
+             <div className="mt-12 space-y-2 text-left border-t border-white/10 pt-8">
                 <SettingsToggle label="Dark Interface" active={isDarkMode} onToggle={handleToggleTheme} icon="fa-moon" />
-                <SettingsToggle label="Advanced Analytics" active={user.useAdvancedMode} onToggle={() => handleUpdateUser({...user, useAdvancedMode: !user.useAdvancedMode})} icon="fa-chart-pie" />
+                <SettingsToggle label="Analytics Mode" active={user.useAdvancedMode} onToggle={() => handleUpdateUser({...user, useAdvancedMode: !user.useAdvancedMode})} icon="fa-chart-pie" />
                 
-                <div className="py-6 border-b border-white/5 space-y-4">
+                <div className="py-8 border-b border-white/10 space-y-5">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400"><i className="fa-solid fa-bullseye"></i></div>
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg"><i className="fa-solid fa-bullseye"></i></div>
                       <div>
-                        <span className="font-bold text-sm text-slate-200 block">Attendance Goal</span>
-                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Threshold for Safe status</span>
+                        <span className="font-black text-sm text-white block">Attendance Goal</span>
+                        <span className="text-[10px] font-black text-indigo-200 uppercase tracking-widest">Global Safety Threshold</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -351,9 +346,9 @@ const App: React.FC = () => {
                         max="100"
                         value={user.attendanceGoal} 
                         onChange={e => handleUpdateUser({...user, attendanceGoal: parseInt(e.target.value) || 0})} 
-                        className="w-16 bg-black/40 text-center font-black py-2 rounded-xl ring-1 ring-white/10 text-white text-sm" 
+                        className="w-20 bg-black/60 border border-white/20 text-center font-black py-3 rounded-2xl text-white text-base focus:ring-2 ring-indigo-500 outline-none" 
                       />
-                      <span className="text-xs font-black text-slate-600">%</span>
+                      <span className="text-xs font-black text-white">%</span>
                     </div>
                   </div>
                   <input 
@@ -363,15 +358,17 @@ const App: React.FC = () => {
                     step="1"
                     value={user.attendanceGoal} 
                     onChange={e => handleUpdateUser({...user, attendanceGoal: parseInt(e.target.value)})} 
-                    className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                    className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-600 border border-white/10"
                   />
                 </div>
              </div>
-             <div className="mt-8 flex justify-between items-center px-2">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Session Updated</span>
-                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">{lastSynced || 'Just now'}</span>
+             
+             <div className="mt-10 flex justify-between items-center px-2">
+                <span className="text-xs font-black text-indigo-200 uppercase tracking-widest">Storage Status</span>
+                <span className="text-xs font-black text-white uppercase tracking-widest">Secured</span>
              </div>
-             <button onClick={async () => { if(confirm("Sign out? Local cache will be cleared.")) { await supabase.auth.signOut(); await storage.clearAll(); } }} className="w-full mt-10 py-5 rounded-2xl bg-rose-500/10 text-rose-500 font-black text-[10px] uppercase tracking-[0.2em] active:scale-95 transition-all hover:bg-rose-500/20">Secure Sign Out</button>
+             
+             <button onClick={async () => { if(confirm("Terminate session? Data is safely stored in the vault.")) { await supabase.auth.signOut(); await storage.clearAll(); } }} className="w-full mt-10 py-5 rounded-2xl bg-rose-600 text-white font-black text-sm uppercase tracking-[0.2em] active:scale-95 transition-all shadow-xl shadow-rose-500/40 border border-white/20">Secure Sign Out</button>
           </div>
         </div>
       )}
@@ -380,15 +377,15 @@ const App: React.FC = () => {
 };
 
 const SettingsToggle: React.FC<{ label: string; active: boolean; onToggle: () => void; icon: string }> = ({ label, active, onToggle, icon }) => (
-  <div className="flex justify-between items-center py-5 border-b border-white/5">
+  <div className="flex justify-between items-center py-6 border-b border-white/10">
     <div className="flex items-center gap-4">
-      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${active ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-800 text-slate-500'}`}>
-        <i className={`fa-solid ${icon} text-sm`}></i>
+      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-md ${active ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'}`}>
+        <i className={`fa-solid ${icon} text-lg`}></i>
       </div>
-      <span className="font-bold text-sm text-slate-200">{label}</span>
+      <span className="font-black text-base text-white">{label}</span>
     </div>
-    <button onClick={onToggle} className={`w-14 h-8 rounded-full transition-all relative p-1.5 ${active ? 'bg-indigo-600' : 'bg-slate-700'}`}>
-       <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all duration-300 ${active ? 'translate-x-6' : 'translate-x-0'}`}></div>
+    <button onClick={onToggle} className={`w-16 h-9 rounded-full transition-all relative p-1.5 ${active ? 'bg-indigo-600' : 'bg-slate-700'}`}>
+       <div className={`w-6 h-6 bg-white rounded-full shadow-lg transition-all duration-300 transform ${active ? 'translate-x-7' : 'translate-x-0'}`}></div>
     </button>
   </div>
 );
