@@ -9,6 +9,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /**
  * Syncs specific application data to Supabase tables.
+ * Fixed: Now deletes old records before inserting new state to handle removals (like holidays).
  */
 export const syncWithSupabase = async (userEmail: string, data: any, type: 'profile' | 'attendance' | 'day_attendance' | 'timetable') => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -27,6 +28,7 @@ export const syncWithSupabase = async (userEmail: string, data: any, type: 'prof
         updated_at: new Date().toISOString()
       });
     } else if (type === 'timetable') {
+      // Clear and re-insert to handle deletions
       await supabase.from('timetable').delete().eq('user_id', user.id);
       const slotsToInsert = data.map((slot: any) => ({
         user_id: user.id,
@@ -41,8 +43,9 @@ export const syncWithSupabase = async (userEmail: string, data: any, type: 'prof
         await supabase.from('timetable').insert(slotsToInsert);
       }
     } else if (type === 'attendance') {
+      // FIX: Delete existing records first to ensure removed items stay removed
+      await supabase.from('attendance').delete().eq('user_id', user.id);
       const recordsToInsert = data.map((rec: any) => ({
-        id: `${user.id}-${rec.id}`,
         user_id: user.id,
         date: rec.date,
         subject_id: rec.subjectId,
@@ -51,16 +54,18 @@ export const syncWithSupabase = async (userEmail: string, data: any, type: 'prof
         slot_id: rec.slotId
       }));
       if (recordsToInsert.length > 0) {
-        await supabase.from('attendance').upsert(recordsToInsert);
+        await supabase.from('attendance').insert(recordsToInsert);
       }
     } else if (type === 'day_attendance') {
+      // FIX: Delete existing records first to ensure removed holidays stay removed
+      await supabase.from('day_attendance').delete().eq('user_id', user.id);
       const dayRecords = data.map((rec: any) => ({
         user_id: user.id,
         date: rec.date,
         status: rec.status
       }));
       if (dayRecords.length > 0) {
-        await supabase.from('day_attendance').upsert(dayRecords);
+        await supabase.from('day_attendance').insert(dayRecords);
       }
     }
   } catch (err) {
