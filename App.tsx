@@ -228,7 +228,7 @@ const App: React.FC = () => {
       <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#020617] relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-indigo-950/40 to-black pointer-events-none"></div>
 
-        <div className="w-full max-w-sm space-y-12 relative z-10 animate-in fade-in zoom-in duration-700">
+        <div className="w-full max-sm space-y-12 relative z-10 animate-in fade-in zoom-in duration-700">
           <div className="text-center space-y-4">
              <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 via-indigo-600 to-blue-700 text-white rounded-[2.5rem] flex items-center justify-center mx-auto text-4xl shadow-2xl border border-white/20">
                 <i className="fa-solid fa-graduation-cap"></i>
@@ -321,17 +321,28 @@ const App: React.FC = () => {
         />
       )}
       {view === ViewMode.TIMETABLE && (
-        <TimetableSetup slots={timetable} onAddSlot={async (s) => {
-          const next = [...timetable, { ...s, id: Date.now().toString() }];
-          setTimetable(next);
-          await storage.setTimetable(next);
-          if (user.email) await syncWithSupabase(user.email, next, 'timetable');
-        }} onDeleteSlot={async (id) => {
-          const next = timetable.filter(s => s.id !== id);
-          setTimetable(next);
-          await storage.setTimetable(next);
-          if (user.email) await syncWithSupabase(user.email, next, 'timetable');
-        }} />
+        <TimetableSetup 
+          slots={timetable} 
+          onAddSlot={async (s) => {
+            const next = [...timetable, { ...s, id: Date.now().toString() }];
+            setTimetable(next);
+            await storage.setTimetable(next);
+            if (user.email) await syncWithSupabase(user.email, next, 'timetable');
+          }} 
+          onDeleteSlot={async (id) => {
+            const next = timetable.filter(s => s.id !== id);
+            setTimetable(next);
+            await storage.setTimetable(next);
+            if (user.email) await syncWithSupabase(user.email, next, 'timetable');
+          }}
+          onBulkAddSlots={async (newSlots) => {
+            const slotsWithIds = newSlots.map(s => ({ ...s, id: Math.random().toString(36).substr(2, 9) }));
+            const next = [...timetable, ...slotsWithIds];
+            setTimetable(next);
+            await storage.setTimetable(next);
+            if (user.email) await syncWithSupabase(user.email, next, 'timetable');
+          }}
+        />
       )}
       {view === ViewMode.SETTINGS && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">

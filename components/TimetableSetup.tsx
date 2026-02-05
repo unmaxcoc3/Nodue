@@ -1,16 +1,21 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { TimetableSlot } from '../types';
 import { DAYS, SUBJECT_COLORS } from '../constants';
+import { GoogleGenAI } from "@google/genai";
 
 interface TimetableSetupProps {
   slots: TimetableSlot[];
   onAddSlot: (slot: Omit<TimetableSlot, 'id'>) => void;
   onDeleteSlot: (id: string) => void;
+  onBulkAddSlots?: (slots: Omit<TimetableSlot, 'id'>[]) => void;
 }
 
-const TimetableSetup: React.FC<TimetableSetupProps> = ({ slots, onAddSlot, onDeleteSlot }) => {
+const TimetableSetup: React.FC<TimetableSetupProps> = ({ slots, onAddSlot, onDeleteSlot, onBulkAddSlots }) => {
   const [showAdd, setShowAdd] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [newSlot, setNewSlot] = useState<Omit<TimetableSlot, 'id'>>({
     subjectName: '',
     day: 1,
@@ -28,6 +33,59 @@ const TimetableSetup: React.FC<TimetableSetupProps> = ({ slots, onAddSlot, onDel
     setNewSlot({ ...newSlot, subjectName: '' });
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    try {
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onload = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          resolve(base64);
+        };
+      });
+      reader.readAsDataURL(file);
+      const base64Data = await base64Promise;
+
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: [
+          {
+            parts: [
+              { text: "Extract the weekly college timetable from this image. Provide a JSON array of objects. Each object MUST have: 'subjectName' (string), 'day' (integer 0 for Sunday, 1 for Monday, etc. up to 6), 'startTime' (24h string HH:mm), 'endTime' (24h string HH:mm), and 'faculty' (string or null). Ignore empty slots. If a day isn't clear, assume Monday-Friday. Only return the raw JSON array." },
+              { inlineData: { mimeType: file.type, data: base64Data } }
+            ]
+          }
+        ],
+        config: {
+          responseMimeType: "application/json"
+        }
+      });
+
+      const extracted = JSON.parse(response.text || "[]");
+      if (Array.isArray(extracted) && onBulkAddSlots) {
+        const slotsWithColors = extracted.map((s: any, idx: number) => ({
+          subjectName: s.subjectName || "Unknown",
+          day: typeof s.day === 'number' ? s.day : 1,
+          startTime: s.startTime || "09:00",
+          endTime: s.endTime || "10:00",
+          faculty: s.faculty || "",
+          color: SUBJECT_COLORS[idx % SUBJECT_COLORS.length]
+        }));
+        onBulkAddSlots(slotsWithColors);
+      }
+    } catch (err) {
+      console.error("Scanning error:", err);
+      alert("Failed to scan timetable. Please ensure the photo is clear.");
+    } finally {
+      setIsScanning(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex justify-between items-center px-4">
@@ -35,13 +93,54 @@ const TimetableSetup: React.FC<TimetableSetupProps> = ({ slots, onAddSlot, onDel
           <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Weekly</span>
           <h2 className="text-4xl font-black text-white tracking-tighter">Schedule</h2>
         </div>
-        <button 
-          onClick={() => setShowAdd(!showAdd)}
-          className={`w-14 h-14 flex items-center justify-center rounded-[1.8rem] shadow-2xl transition-all active:scale-90 ${showAdd ? 'bg-rose-600 text-white rotate-45' : 'bg-indigo-600 text-white shadow-indigo-500/30'}`}
-        >
-          <i className="fa-solid fa-plus text-xl"></i>
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isScanning}
+            className="w-14 h-14 flex items-center justify-center rounded-[1.8rem] bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 transition-all active:scale-90 hover:bg-indigo-500/20"
+            title="Scan AI"
+          >
+            {isScanning ? <i className="fa-solid fa-spinner animate-spin text-xl"></i> : <i className="fa-solid fa-wand-magic-sparkles text-xl"></i>}
+          </button>
+          <button 
+            onClick={() => setShowAdd(!showAdd)}
+            className={`w-14 h-14 flex items-center justify-center rounded-[1.8rem] shadow-2xl transition-all active:scale-90 ${showAdd ? 'bg-rose-600 text-white rotate-45' : 'bg-indigo-600 text-white shadow-indigo-500/30'}`}
+          >
+            <i className="fa-solid fa-plus text-xl"></i>
+          </button>
+        </div>
       </div>
+
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        accept="image/*" 
+        capture="environment"
+        className="hidden" 
+      />
+
+      {isScanning && (
+        <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-xl p-10 text-center">
+           <div className="relative mb-10">
+              <div className="w-32 h-32 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                 <i className="fa-solid fa-wand-magic-sparkles text-white text-4xl animate-pulse"></i>
+              </div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-indigo-500 shadow-[0_0_20px_#6366f1] animate-[scan_2s_ease-in-out_infinite]"></div>
+           </div>
+           <h3 className="text-2xl font-black text-white tracking-tight mb-2">AI Intelligence Scanning</h3>
+           <p className="text-slate-400 text-sm font-bold uppercase tracking-widest opacity-60">Decrypting Timetable Data...</p>
+           
+           <style>{`
+             @keyframes scan {
+               0% { transform: translateY(0); }
+               50% { transform: translateY(128px); }
+               100% { transform: translateY(0); }
+             }
+           `}</style>
+        </div>
+      )}
 
       {showAdd && (
         <div className="fixed inset-0 z-50 flex items-end justify-center p-6 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
@@ -132,13 +231,13 @@ const TimetableSetup: React.FC<TimetableSetupProps> = ({ slots, onAddSlot, onDel
           );
         })}
 
-        {slots.length === 0 && !showAdd && (
+        {slots.length === 0 && !showAdd && !isScanning && (
           <div className="text-center py-24 bg-slate-900/40 rounded-[3rem] border border-white/5 flex flex-col items-center mx-4">
             <div className="w-24 h-24 bg-indigo-500/5 rounded-[2.5rem] flex items-center justify-center text-indigo-500/40 text-4xl mb-8 border border-white/5">
               <i className="fa-solid fa-calendar-plus"></i>
             </div>
             <h4 className="text-2xl font-black text-white tracking-tighter">Your Schedule is Clear</h4>
-            <p className="text-slate-500 text-sm font-bold mt-3 max-w-[220px] leading-relaxed opacity-60">Add your lectures to start tracking session-wise progress.</p>
+            <p className="text-slate-500 text-sm font-bold mt-3 max-w-[220px] leading-relaxed opacity-60">Add manually or use AI Scan to populate your lectures.</p>
           </div>
         )}
       </div>
