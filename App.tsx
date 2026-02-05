@@ -20,6 +20,8 @@ const App: React.FC = () => {
   
   const [isSignUp, setIsSignUp] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncSuccess, setSyncSuccess] = useState(false);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
 
   useEffect(() => {
@@ -135,6 +137,31 @@ const App: React.FC = () => {
     if (finalUser.email) await syncWithSupabase(finalUser.email, finalUser, 'profile');
   };
 
+  const handleManualSync = async () => {
+    if (!user || !user.email) return;
+    setSyncLoading(true);
+    setSyncSuccess(false);
+    
+    try {
+      // Sync everything in sequence
+      await syncWithSupabase(user.email, user, 'profile');
+      await syncWithSupabase(user.email, timetable, 'timetable');
+      await syncWithSupabase(user.email, subjectAttendance, 'attendance');
+      await syncWithSupabase(user.email, dayAttendance, 'day_attendance');
+      
+      const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setLastSynced(now);
+      setSyncSuccess(true);
+      
+      // Reset success message after 3 seconds
+      setTimeout(() => setSyncSuccess(false), 3000);
+    } catch (err) {
+      alert("Manual sync failed. Please check your connection.");
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
   const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setAuthLoading(true);
@@ -208,7 +235,6 @@ const App: React.FC = () => {
              </div>
              <div>
                <h1 className="text-6xl font-black text-white tracking-tighter text-glow">nodue</h1>
-               <p className="text-indigo-300 font-black uppercase tracking-[0.4em] text-xs mt-3">Platinum Tracker</p>
              </div>
           </div>
 
@@ -327,6 +353,33 @@ const App: React.FC = () => {
              </div>
              
              <div className="mt-12 space-y-2 text-left border-t border-white/10 pt-8">
+                {/* MANUAL SAVE BUTTON */}
+                <div className="mb-8">
+                  <button 
+                    onClick={handleManualSync}
+                    disabled={syncLoading}
+                    className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl border border-white/20 active:scale-95 ${
+                      syncSuccess 
+                        ? 'bg-emerald-600 text-white' 
+                        : 'bg-gradient-to-br from-indigo-500 via-indigo-600 to-blue-700 text-white shadow-indigo-500/40'
+                    }`}
+                  >
+                    {syncLoading ? (
+                      <i className="fa-solid fa-circle-notch animate-spin text-lg"></i>
+                    ) : syncSuccess ? (
+                      <i className="fa-solid fa-circle-check text-lg"></i>
+                    ) : (
+                      <i className="fa-solid fa-cloud-arrow-up text-lg"></i>
+                    )}
+                    {syncLoading ? 'Securing Data...' : syncSuccess ? 'Vault Secured' : 'Sync to Cloud Vault'}
+                  </button>
+                  {lastSynced && (
+                    <p className="text-center text-[10px] font-black text-indigo-300 uppercase tracking-widest mt-3">
+                      Last encrypted backup: {lastSynced}
+                    </p>
+                  )}
+                </div>
+
                 <SettingsToggle label="Dark Interface" active={isDarkMode} onToggle={handleToggleTheme} icon="fa-moon" />
                 <SettingsToggle label="Analytics Mode" active={user.useAdvancedMode} onToggle={() => handleUpdateUser({...user, useAdvancedMode: !user.useAdvancedMode})} icon="fa-chart-pie" />
                 
