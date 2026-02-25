@@ -33,9 +33,29 @@ const TimetableSetup: React.FC<TimetableSetupProps> = ({ slots, onAddSlot, onDel
     setNewSlot({ ...newSlot, subjectName: '' });
   };
 
+  const extractJson = (text: string) => {
+    try {
+      // Find the first [ and last ] to extract array
+      const start = text.indexOf('[');
+      const end = text.lastIndexOf(']');
+      if (start === -1 || end === -1) return [];
+      const jsonStr = text.substring(start, end + 1);
+      return JSON.parse(jsonStr);
+    } catch (e) {
+      console.error("Manual JSON extraction failed", e);
+      return [];
+    }
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Check file size (rough limit 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Image is too large. Please upload an image under 10MB.");
+      return;
+    }
 
     setIsScanning(true);
     try {
@@ -50,36 +70,45 @@ const TimetableSetup: React.FC<TimetableSetupProps> = ({ slots, onAddSlot, onDel
       const base64Data = await base64Promise;
 
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      
+      // Use gemini-3-pro-preview for high reasoning quality OCR
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: [
-          {
-            parts: [
-              { text: "Extract the weekly college timetable from this image. Provide a JSON array of objects. Each object MUST have: 'subjectName' (string), 'day' (integer 0 for Sunday, 1 for Monday, etc. up to 6), 'startTime' (24h string HH:mm), 'endTime' (24h string HH:mm), and 'faculty' (string or null). Ignore empty slots. If a day isn't clear, assume Monday-Friday. Only return the raw JSON array." },
-              { inlineData: { mimeType: file.type, data: base64Data } }
-            ]
-          }
-        ],
-        config: {
-          responseMimeType: "application/json"
+        model: 'gemini-3-pro-preview',
+        contents: {
+          parts: [
+            { text: "Extract the weekly university timetable from this image. RETURN ONLY A JSON ARRAY of objects. Each object must have: subjectName, day (0-6 where 0 is Sunday, 1 is Monday, etc), startTime (HH:mm), endTime (HH:mm), faculty (string or null). Do not include markdown code blocks or explanations." },
+            { inlineData: { mimeType: file.type || 'image/jpeg', data: base64Data } }
+          ]
         }
       });
 
-      const extracted = JSON.parse(response.text || "[]");
+      const responseText = response.text || "[]";
+      const extracted = extractJson(responseText);
+      
       if (Array.isArray(extracted) && onBulkAddSlots) {
-        const slotsWithColors = extracted.map((s: any, idx: number) => ({
-          subjectName: s.subjectName || "Unknown",
-          day: typeof s.day === 'number' ? s.day : 1,
-          startTime: s.startTime || "09:00",
-          endTime: s.endTime || "10:00",
-          faculty: s.faculty || "",
-          color: SUBJECT_COLORS[idx % SUBJECT_COLORS.length]
-        }));
-        onBulkAddSlots(slotsWithColors);
+        if (extracted.length === 0) {
+          alert("AI couldn't find any timetable data in this image. Try a clearer shot.");
+        } else {
+          const slotsWithColors = extracted.map((s: any, idx: number) => ({
+            subjectName: s.subjectName || "Unknown Lecture",
+            day: typeof s.day === 'number' ? s.day : 1,
+            startTime: s.startTime || "09:00",
+            endTime: s.endTime || "10:00",
+            faculty: s.faculty || "",
+            color: SUBJECT_COLORS[idx % SUBJECT_COLORS.length]
+          }));
+          onBulkAddSlots(slotsWithColors);
+        }
+      } else {
+        throw new Error("Invalid format received from AI");
       }
-    } catch (err) {
-      console.error("Scanning error:", err);
-      alert("Failed to scan timetable. Please ensure the photo is clear.");
+    } catch (err: any) {
+      console.error("Scanning error details:", err);
+      if (err.message?.includes('403') || err.message?.toLowerCase().includes('permission')) {
+        alert("Access Denied: The AI service for multimodal scanning is restricted. Please try adding your timetable manually.");
+      } else {
+        alert("Could not process image. Please ensure it's a clear photo of a timetable.");
+      }
     } finally {
       setIsScanning(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -98,9 +127,9 @@ const TimetableSetup: React.FC<TimetableSetupProps> = ({ slots, onAddSlot, onDel
             onClick={() => fileInputRef.current?.click()}
             disabled={isScanning}
             className="w-14 h-14 flex items-center justify-center rounded-[1.8rem] bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 transition-all active:scale-90 hover:bg-indigo-500/20"
-            title="Scan AI"
+            title="Upload Image"
           >
-            {isScanning ? <i className="fa-solid fa-spinner animate-spin text-xl"></i> : <i className="fa-solid fa-wand-magic-sparkles text-xl"></i>}
+            {isScanning ? <i className="fa-solid fa-spinner animate-spin text-xl"></i> : <i className="fa-solid fa-image-polaroid text-xl"></i>}
           </button>
           <button 
             onClick={() => setShowAdd(!showAdd)}
@@ -116,7 +145,6 @@ const TimetableSetup: React.FC<TimetableSetupProps> = ({ slots, onAddSlot, onDel
         ref={fileInputRef} 
         onChange={handleFileChange} 
         accept="image/*" 
-        capture="environment"
         className="hidden" 
       />
 
@@ -187,7 +215,7 @@ const TimetableSetup: React.FC<TimetableSetupProps> = ({ slots, onAddSlot, onDel
               </div>
             </div>
             <button type="submit" className="w-full bg-indigo-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-indigo-500/20 active:scale-95 transition-all text-xs uppercase tracking-[0.2em] mt-4">Save Session</button>
-          </form>
+           </form>
         </div>
       )}
 
@@ -237,7 +265,7 @@ const TimetableSetup: React.FC<TimetableSetupProps> = ({ slots, onAddSlot, onDel
               <i className="fa-solid fa-calendar-plus"></i>
             </div>
             <h4 className="text-2xl font-black text-white tracking-tighter">Your Schedule is Clear</h4>
-            <p className="text-slate-500 text-sm font-bold mt-3 max-w-[220px] leading-relaxed opacity-60">Add manually or use AI Scan to populate your lectures.</p>
+            <p className="text-slate-500 text-sm font-bold mt-3 max-w-[220px] leading-relaxed opacity-60">Add manually or select from gallery to populate your lectures.</p>
           </div>
         )}
       </div>

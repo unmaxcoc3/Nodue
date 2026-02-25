@@ -173,8 +173,6 @@ const App: React.FC = () => {
       if (isSignUp) {
         const name = formData.get('name') as string;
         const institution = formData.get('institution') as string;
-        const semester = formData.get('semester') as string;
-        const goal = parseInt(formData.get('goal') as string) || 75;
         
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
@@ -182,8 +180,8 @@ const App: React.FC = () => {
         const newUser: UserProfile = {
           name,
           institutionName: institution,
-          semester,
-          attendanceGoal: goal,
+          semester: "Semester 1", // Default value
+          attendanceGoal: 75,     // Default value
           useAdvancedMode: true,
           email,
           isSynced: true
@@ -265,20 +263,8 @@ const App: React.FC = () => {
               {isSignUp && (
                 <div className="space-y-6 animate-in slide-in-from-top-4">
                   <div>
-                    <label className="text-xs font-black text-white uppercase tracking-widest mb-2 ml-2 block">Institution</label>
+                    <label className="text-xs font-black text-white uppercase tracking-widest mb-2 ml-2 block">College / Institution</label>
                     <input name="institution" required placeholder="University Name" className="w-full bg-black/60 border border-white/20 rounded-2xl p-4 text-base font-bold text-white placeholder:text-slate-500 focus:ring-2 ring-indigo-500 outline-none transition-all" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-5">
-                    <div>
-                      <label className="text-xs font-black text-white uppercase tracking-widest mb-2 ml-2 block">Semester</label>
-                      <select name="semester" className="w-full bg-black/60 border border-white/20 rounded-2xl p-4 text-sm font-bold text-white focus:ring-2 ring-indigo-500 outline-none appearance-none">
-                        {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={`Semester ${n}`} className="bg-slate-900">Sem {n}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs font-black text-white uppercase tracking-widest mb-2 ml-2 block">Goal %</label>
-                      <input name="goal" type="number" defaultValue="75" min="0" max="100" className="w-full bg-black/60 border border-white/20 rounded-2xl p-4 text-base font-bold text-white focus:ring-2 ring-indigo-500 outline-none transition-all" />
-                    </div>
                   </div>
                 </div>
               )}
